@@ -21,10 +21,6 @@ export default function EntitiesList() {
     }
   }
 
-  const onBadgeClick = async () => {
-    setSelectedEntities(selectedEntities)
-  }
-
   const cancelSelection = () => {
     setSelectedEntities([])
   }
@@ -52,7 +48,7 @@ export default function EntitiesList() {
           {selectedEntities.length > 0 && (
             <Menu shadow="md" width={150}>
               <Menu.Target>
-                <Button size="sm" compact radius="xl" variant="filled" onClick={onBadgeClick} mr={6}>
+                <Button size="sm" compact radius="xl" variant="filled" mr={6}>
                   {selectedEntities.length}
                 </Button>
               </Menu.Target>
@@ -68,11 +64,24 @@ export default function EntitiesList() {
           <Group
             key={e.id + e.name}
             noWrap
-            style={{ cursor: "pointer" }}
+            style={{
+              cursor: "pointer"
+            }}
             onClick={() => onClick(e)}
           >
             <Checkbox checked={!!selectedEntities.includes(e.id)} onChange={() => { }} />
-            <Text size="sm" sx={{ flex: 1 }} title={e.name}>{e.name}</Text>
+            <Text
+              size="sm"
+              sx={{
+                flex: 1,
+                "&:hover": {
+                  opacity: 0.5
+                }
+              }}
+              title={e.name}
+            >
+              {e.name}
+            </Text>
             {e.linkedArticles?.length && (
               <Tooltip position="left" label={`Linked articles (${e.linkedArticles?.length})`} withArrow>
                 <Badge sx={{ background: "transparent" }}>

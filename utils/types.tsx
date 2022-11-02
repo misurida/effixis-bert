@@ -28,6 +28,7 @@ export interface Topic {
   id: string
   name: string
   color?: string
+  topwords?: string[]
   linkedArticles?: Article[]
 }
 

@@ -40,6 +40,8 @@ export interface DataContext {
   setEventsMinLinkedArticles: Dispatch<SetStateAction<number | undefined>>
   eventsMaxLinkedArticles: number
   // topics
+  selectedTopics: string[]
+  setSelectedTopics: Dispatch<SetStateAction<string[]>>
   topicsQuery: string
   setTopicsQuery: Dispatch<SetStateAction<string>>
   topicsOrderBy: OrderByAction | undefined
@@ -64,8 +66,7 @@ function useDataRoot() {
   const [articlesQuery, setArticlesQuery] = useState("")
   const [articlesDateFilter, setArticlesDateFilter] = useState<DateFilter | undefined>()
   const [articlesOrderBy, setArticlesOrderBy] = useState<OrderByAction | undefined>()
-  const [articlesMinLinkedEntities, setArticlesMinLinkedEntities] = useState<number | undefined>(undefined)
-
+  const [articlesMinLinkedEntities, setArticlesMinLinkedEntities] = useState<number | undefined>(1)
   // entities
   const [selectedEntities, setSelectedEntities] = useState<string[]>([])
   const [entitiesOrderBy, setEntitiesOrderBy] = useState<OrderByAction | undefined>()
@@ -73,11 +74,12 @@ function useDataRoot() {
   const [eventsQuery, setEventsQuery] = useState("")
   const [eventsDateFilter, setEventsDateFilter] = useState<DateFilter | undefined>()
   const [eventsOrderBy, setEventsOrderBy] = useState<OrderByAction | undefined>()
-  const [eventsMinLinkedArticles, setEventsMinLinkedArticles] = useState<number | undefined>(undefined)
+  const [eventsMinLinkedArticles, setEventsMinLinkedArticles] = useState<number | undefined>(1)
   // topics
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [topicsQuery, setTopicsQuery] = useState("")
   const [topicsOrderBy, setTopicsOrderBy] = useState<OrderByAction | undefined>()
-  const [topicsMinLinkedArticles, setTopicsMinLinkedArticles] = useState<number | undefined>(undefined)
+  const [topicsMinLinkedArticles, setTopicsMinLinkedArticles] = useState<number | undefined>(1)
   const [topicsMaxDisplayedArticles, setTopicsMaxDisplayedArticles] = useState<number | undefined>(10)
 
   useEffect(() => {
@@ -124,10 +126,14 @@ function useDataRoot() {
 
   // events
   const filteredEvents = useMemo(() => {
-    if (!eventsQuery && !eventsDateFilter && !eventsOrderBy && !filteredArticles.length && !eventsMinLinkedArticles) {
+    if (!eventsQuery && !eventsDateFilter && !eventsOrderBy && !filteredArticles.length && !eventsMinLinkedArticles && !selectedTopics.length) {
       return []
     }
     let o = filterArray(events, ["name", "id"], eventsQuery, eventsDateFilter)
+    if (selectedTopics.length > 0) {
+      const l = articles.filter(a => selectedTopics.some(t => a.linkedTopics?.includes(t))).map(a => a.id)
+      o = o.filter(e => e.linkedArticles?.some(a => l.includes(a.id)))
+    }
     if (filteredArticles.length > 0) {
       o = o.map(e => ({ ...e, linkedArticles: filteredArticles.filter(a => a.event_id === e.id) }))
     }
@@ -138,7 +144,7 @@ function useDataRoot() {
       sortArray(o, eventsOrderBy)
     }
     return o;
-  }, [events, eventsQuery, eventsDateFilter, eventsOrderBy, eventsMinLinkedArticles, filteredArticles])
+  }, [events, eventsQuery, eventsDateFilter, eventsOrderBy, eventsMinLinkedArticles, filteredArticles, selectedTopics])
 
   const eventsMaxLinkedArticles = useMemo(() =>
     (filteredEvents.length > 0 ? filteredEvents : events).reduce((a, e) => (e.linkedArticles?.length || 0) > a ? e.linkedArticles?.length || 0 : a, 0),
@@ -222,6 +228,8 @@ function useDataRoot() {
     setEventsMinLinkedArticles,
     eventsMaxLinkedArticles,
     // topics
+    selectedTopics,
+    setSelectedTopics,
     topicsQuery,
     setTopicsQuery,
     topicsOrderBy,

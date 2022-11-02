@@ -28,16 +28,17 @@ export default function PageLayout(props: PageLayoutProps) {
   }, [router.pathname])
 
   const buildLinks = (style?: CSSProperties) => {
+    const s = { textDecoration: "none", ...style }
     return (
       <>
         <Link href="/events" passHref>
-          <NavLink component="a" style={style} label="Events" active={router.pathname === '/events'} />
+          <NavLink component="a" style={s} label="Events" active={router.pathname === '/events'} />
         </Link>
         <Link href="/topics" passHref>
-          <NavLink component="a" style={style} label="Topics" active={router.pathname === '/topics'} />
+          <NavLink component="a" style={s} label="Topics" active={router.pathname === '/topics'} />
         </Link>
         <Link href="/articles" passHref>
-          <NavLink component="a" style={style} label="Articles" active={router.pathname === '/articles'} />
+          <NavLink component="a" style={s} label="Articles" active={router.pathname === '/articles'} />
         </Link>
       </>
     )
@@ -54,7 +55,7 @@ export default function PageLayout(props: PageLayoutProps) {
         <Navbar p="md" hiddenBreakpoint="sm" hidden={!opened} width={{ sm: 200, lg: 300 }}>
           <MediaQuery largerThan="sm" styles={{ display: 'none' }}>
             <Box mb="md" sx={{ width: "100%", display: "flex", marginRight: "auto" }}>
-              {buildLinks({textAlign: "center"})}
+              {buildLinks({ textAlign: "center" })}
             </Box>
           </MediaQuery>
           <DataLoadForm />

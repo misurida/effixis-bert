@@ -1,4 +1,4 @@
-import { Box, Button, FileInput, Group, Modal, Popover, Stack, Text } from "@mantine/core";
+import { Box, Button, FileInput, Group, Modal, Popover, Stack, Text, Tooltip } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons";
 import dayjs from "dayjs";
@@ -49,7 +49,9 @@ export default function DataLoadForm() {
     topics,
     filteredTopics,
     entities,
-    loadData
+    loadData,
+    selectedEntities,
+    selectedTopics
   } = useData()
   const [opened, setOpened] = useState(false);
   const [loading, setLoading] = useState(false)
@@ -141,7 +143,14 @@ export default function DataLoadForm() {
                   <Text size="xs">topics</Text>
                 </td>
                 <td>
-                  <Text size="xs">{topics?.length}</Text>
+                  <Text size="xs">
+                    {filteredTopics?.length}
+                    {selectedTopics.length > 0 && (
+                      <Tooltip label="Selected topics" withArrow>
+                        <span> ({selectedTopics.length})</span>
+                      </Tooltip>
+                    )}
+                  </Text>
                 </td>
               </tr>
             )}
@@ -151,7 +160,14 @@ export default function DataLoadForm() {
                   <Text size="xs">entities</Text>
                 </td>
                 <td>
-                  <Text size="xs">{entities?.length}</Text>
+                  <Text size="xs">
+                    {entities?.length}
+                    {selectedEntities.length > 0 && (
+                      <Tooltip label="Selected entities" withArrow>
+                        <span> ({selectedEntities.length})</span>
+                      </Tooltip>
+                    )}
+                  </Text>
                 </td>
               </tr>
             )}

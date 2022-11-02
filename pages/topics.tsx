@@ -1,7 +1,7 @@
 import type { NextPage } from 'next'
 import { orderByNameLinkedArticlesActions } from '../utils/globals'
-import { Grid, Title, Text, Card, Group, Button, Modal, NumberInput, Popover, Stack, ColorSwatch, Tooltip, Paper, Slider, ThemeIcon } from '@mantine/core'
-import { IconChevronDown, IconFilterOff } from '@tabler/icons'
+import { Grid, Title, Text, Card, Group, Button, Modal, NumberInput, Popover, Stack, ColorSwatch, Tooltip, Paper, Slider, ThemeIcon, Checkbox, Menu, ActionIcon } from '@mantine/core'
+import { IconChevronDown, IconDotsVertical, IconFilterOff } from '@tabler/icons'
 import { useState } from 'react'
 import { useData } from '../hooks/useData'
 import { Topic } from '../utils/types'
@@ -23,9 +23,12 @@ const Topics: NextPage = () => {
     setTopicsMinLinkedArticles,
     topicsMaxDisplayedArticles,
     setTopicsMaxDisplayedArticles,
-    topicsMaxLinkedArticles
+    topicsMaxLinkedArticles,
+    selectedTopics,
+    setSelectedTopics
   } = useData()
-  const [opened, setOpened] = useState(false);
+  const [showArticles, setShowArticles] = useState(false);
+  const [showTopWords, setShowTopWords] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [localTopicsMaxDisplayedArticles, setlocalTopicsMaxDisplayedArticles] = useState(topicsMaxDisplayedArticles)
   const [localTopicsMinLinkedArticles, setLocalTopicsMinLinkedArticles] = useState(topicsMinLinkedArticles)
@@ -33,7 +36,7 @@ const Topics: NextPage = () => {
 
   const onBadgeClick = (t: Topic) => {
     if (t.linkedArticles) {
-      setOpened(true)
+      setShowArticles(true)
       setSelectedTopic(t)
     }
   }
@@ -52,6 +55,26 @@ const Topics: NextPage = () => {
       const tops: Topic[] = JSON.parse(JSON.stringify(topics))
       tops.splice(i, 1, { ...t, color: v })
       setTopics(tops)
+    }
+  }
+
+  const onCheckboxClick = (e: Topic) => {
+    if (selectedTopics.includes(e.id)) {
+      setSelectedTopics(selectedTopics.filter(ee => ee !== e.id))
+    }
+    else {
+      setSelectedTopics([...selectedTopics, e.id])
+    }
+  }
+
+  const cancelSelection = () => {
+    setSelectedTopics([])
+  }
+
+  const displayTopWords = (t: Topic) => {
+    if (t.topwords?.length) {
+      setSelectedTopic(t)
+      setShowTopWords(true)
     }
   }
 
@@ -116,6 +139,18 @@ const Topics: NextPage = () => {
                 </Stack>
               </Popover.Dropdown>
             </Popover>
+            {selectedTopics.length > 0 && (
+              <Menu shadow="md" width={150}>
+                <Menu.Target>
+                  <Button size="sm" compact radius="xl" variant="filled" mr={6}>
+                    {selectedTopics.length}
+                  </Button>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item onClick={cancelSelection}>Cancel selection</Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            )}
           </Group>
         </Group>
       </Group>
@@ -124,11 +159,12 @@ const Topics: NextPage = () => {
           {filteredTopics.map(t => (
             <Grid.Col md={6} lg={4} key={t.id}>
               <Paper shadow="sm" p="md" radius="md" withBorder>
-                <Group position="apart" noWrap>
+                <Group position="apart" noWrap spacing={5}>
                   {t.color && (
                     <ColorInput value={t.color} onChange={v => onColorChange(t, v)} dotValue={t.id.replace("title_model_", "")} />
                   )}
                   <Text title={t.id.replace("title_model_", "")} weight={500} mr="auto" sx={{ wordBreak: "break-word" }}>{t.name}</Text>
+                  <Checkbox checked={!!selectedTopics.includes(t.id)} onChange={() => onCheckboxClick(t)} />
                   <Button
                     size="sm"
                     color={!t.linkedArticles?.length ? 'gray' : undefined}
@@ -139,6 +175,18 @@ const Topics: NextPage = () => {
                   >
                     {t.linkedArticles?.length}
                   </Button>
+                  {((t.topwords?.length || 0) > 0) && (
+                    <Menu shadow="md" width={150}>
+                      <Menu.Target>
+                        <ActionIcon size="xs">
+                          <IconDotsVertical size={16} />
+                        </ActionIcon>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Item onClick={() => displayTopWords(t)}>Show Top Words</Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
+                  )}
                 </Group>
                 {!!topicsMaxDisplayedArticles && (
                   <ol style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 5, fontSize: "0.8em" }}>
@@ -159,8 +207,8 @@ const Topics: NextPage = () => {
         <Text sx={{ opacity: 0.5 }}>No topic found...</Text>
       )}
       <Modal
-        opened={opened}
-        onClose={() => setOpened(false)}
+        opened={showArticles}
+        onClose={() => setShowArticles(false)}
         title={selectedTopic?.name}
         size="xl"
       >
@@ -177,6 +225,23 @@ const Topics: NextPage = () => {
                   ) : null
                 })}
                 <Text sx={{ wordBreak: "break-word" }}><a href={a.url} target="_blank" rel="noreferrer">{a.title}</a></Text>
+              </Group>
+            </li>
+          ))}
+        </ol>
+      </Modal>
+      <Modal
+        opened={showTopWords}
+        onClose={() => setShowTopWords(false)}
+        title={selectedTopic?.name}
+        size="xl"
+      >
+        <Text>Topic Top Words:</Text>
+        <ol style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 5, fontSize: "0.8em" }}>
+          {selectedTopic?.topwords?.map(a => (
+            <li key={a}>
+              <Group spacing={5} noWrap>
+                <Text sx={{ wordBreak: "break-word" }}>{a}</Text>
               </Group>
             </li>
           ))}
