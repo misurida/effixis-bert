@@ -1,13 +1,15 @@
 import type { NextPage } from 'next'
 import { orderByNameLinkedArticlesActions } from '../utils/globals'
-import { Grid, Title, Text, Card, Group, Button, Modal, NumberInput, Popover, Stack, ColorSwatch, Tooltip, Paper, Slider, ThemeIcon, Checkbox, Menu, ActionIcon } from '@mantine/core'
+import { Grid, Title, Text, Card, Group, Button, Modal, NumberInput, Popover, Stack, ColorSwatch, Tooltip, Paper, Slider, ThemeIcon, Checkbox, Menu, ActionIcon, Tabs } from '@mantine/core'
 import { IconChevronDown, IconDotsVertical, IconFilterOff } from '@tabler/icons'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useData } from '../hooks/useData'
 import { Topic } from '../utils/types'
 import OrderByMenu from '../components/OrderByMenu'
 import SearchInput from '../components/SearchInput'
 import { buildColor, buildTopicName, ColorInput, getContrastColor } from '../components/annotations/AnnotationsEditor'
+import MantineTree, { TreeItem } from '../components/MantineTree'
+import { randomId } from '@mantine/hooks'
 
 const Topics: NextPage = () => {
 
@@ -33,6 +35,18 @@ const Topics: NextPage = () => {
   const [localTopicsMaxDisplayedArticles, setlocalTopicsMaxDisplayedArticles] = useState(topicsMaxDisplayedArticles)
   const [localTopicsMinLinkedArticles, setLocalTopicsMinLinkedArticles] = useState(topicsMinLinkedArticles)
   const [selectedTopic, setSelectedTopic] = useState<Topic | undefined>()
+
+  const filteredTopicsTreeItems: TreeItem[] = useMemo(() => filteredTopics.map((e, i) => {
+    return {
+      id: e.id ? Number(e.id.replace("title_model_", "")) : i,
+      parent: e.parentId ? String(e.parentId) : 0,
+      text: e.name,
+      color: e.color,
+      number: e.id,
+      droppable: true,
+      numberOfArticles: e.linkedArticles?.length
+    }
+  }), [filteredTopics])
 
   const onBadgeClick = (t: Topic) => {
     if (t.linkedArticles) {
@@ -154,58 +168,73 @@ const Topics: NextPage = () => {
           </Group>
         </Group>
       </Group>
-      {filteredTopics.length > 0 ? (
-        <Grid>
-          {filteredTopics.map(t => (
-            <Grid.Col md={6} lg={4} key={t.id}>
-              <Paper shadow="sm" p="md" radius="md" withBorder>
-                <Group position="apart" noWrap spacing={5}>
-                  {t.color && (
-                    <ColorInput value={t.color} onChange={v => onColorChange(t, v)} dotValue={t.id.replace("title_model_", "")} />
-                  )}
-                  <Text title={t.id.replace("title_model_", "")} weight={500} mr="auto" sx={{ wordBreak: "break-word" }}>{t.name}</Text>
-                  <Checkbox checked={!!selectedTopics.includes(t.id)} onChange={() => onCheckboxClick(t)} />
-                  <Button
-                    size="sm"
-                    color={!t.linkedArticles?.length ? 'gray' : undefined}
-                    radius="xs"
-                    compact
-                    variant="light"
-                    onClick={() => onBadgeClick(t)}
-                  >
-                    {t.linkedArticles?.length}
-                  </Button>
-                  {((t.topwords?.length || 0) > 0) && (
-                    <Menu shadow="md" width={150}>
-                      <Menu.Target>
-                        <ActionIcon size="xs">
-                          <IconDotsVertical size={16} />
-                        </ActionIcon>
-                      </Menu.Target>
-                      <Menu.Dropdown>
-                        <Menu.Item onClick={() => displayTopWords(t)}>Show Top Words</Menu.Item>
-                      </Menu.Dropdown>
-                    </Menu>
-                  )}
-                </Group>
-                {!!topicsMaxDisplayedArticles && (
-                  <ol style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 5, fontSize: "0.8em" }}>
-                    {t.linkedArticles?.slice(0, topicsMaxDisplayedArticles).map(a => (
-                      <li key={a.id}>
-                        <Group spacing={5} noWrap>
-                          <Text sx={{ wordBreak: "break-word" }}><a href={a.url} target="_blank" rel="noreferrer">{a.title}</a></Text>
-                        </Group>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </Paper>
-            </Grid.Col>
-          ))}
-        </Grid>
-      ) : (
-        <Text sx={{ opacity: 0.5 }}>No topic found...</Text>
-      )}
+
+      <Tabs defaultValue="cards">
+        <Tabs.List>
+          <Tabs.Tab value="cards" >Cards</Tabs.Tab>
+          <Tabs.Tab value="tree">Tree</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="cards" pt="xs">
+          {filteredTopics.length > 0 ? (
+            <Grid>
+              {filteredTopics.map(t => (
+                <Grid.Col md={6} lg={4} key={t.id}>
+                  <Paper shadow="sm" p="md" radius="md" withBorder>
+                    <Group position="apart" noWrap spacing={5}>
+                      {t.color && (
+                        <ColorInput value={t.color} onChange={v => onColorChange(t, v)} dotValue={t.id.replace("title_model_", "")} />
+                      )}
+                      <Text title={t.id.replace("title_model_", "")} weight={500} mr="auto" sx={{ wordBreak: "break-word" }}>{t.name}</Text>
+                      <Checkbox checked={!!selectedTopics.includes(t.id)} onChange={() => onCheckboxClick(t)} />
+                      <Button
+                        size="sm"
+                        color={!t.linkedArticles?.length ? 'gray' : undefined}
+                        radius="xs"
+                        compact
+                        variant="light"
+                        onClick={() => onBadgeClick(t)}
+                      >
+                        {t.linkedArticles?.length}
+                      </Button>
+                      {((t.topwords?.length || 0) > 0) && (
+                        <Menu shadow="md" width={150}>
+                          <Menu.Target>
+                            <ActionIcon size="xs">
+                              <IconDotsVertical size={16} />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            <Menu.Item onClick={() => displayTopWords(t)}>Show Top Words</Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      )}
+                    </Group>
+                    {!!topicsMaxDisplayedArticles && (
+                      <ol style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 5, fontSize: "0.8em" }}>
+                        {t.linkedArticles?.slice(0, topicsMaxDisplayedArticles).map(a => (
+                          <li key={a.id}>
+                            <Group spacing={5} noWrap>
+                              <Text sx={{ wordBreak: "break-word" }}><a href={a.url} target="_blank" rel="noreferrer">{a.title}</a></Text>
+                            </Group>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </Paper>
+                </Grid.Col>
+              ))}
+            </Grid>
+          ) : (
+            <Text sx={{ opacity: 0.5 }}>No topic found...</Text>
+          )}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="tree" pt="xs">
+          <MantineTree data={filteredTopicsTreeItems} onChange={() => {}} onSelect={() => {}} />
+        </Tabs.Panel>
+
+      </Tabs>
       <Modal
         opened={showArticles}
         onClose={() => setShowArticles(false)}

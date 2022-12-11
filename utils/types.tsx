@@ -23,13 +23,14 @@ export interface Event {
   date: string
   linkedArticles?: Article[]
 }
-
+ 
 export interface Topic {
   id: string
   name: string
   color?: string
   topwords?: string[]
   linkedArticles?: Article[]
+  parentId?: string | null
 }
 
 export interface ArticleTopic {
