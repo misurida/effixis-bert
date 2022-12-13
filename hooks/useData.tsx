@@ -14,6 +14,7 @@ export interface DataContext {
   filteredEntities: Entity[]
   loadData: (data: Data) => Promise<void>
   setTopics: Dispatch<SetStateAction<Topic[]>>
+  setArticles: Dispatch<SetStateAction<Article[]>>
   // articles
   articlesQuery: string
   setArticlesQuery: Dispatch<SetStateAction<string>>
@@ -92,7 +93,7 @@ function useDataRoot() {
   }, [])
 
   const filteredArticles = useMemo(() => {
-    if (!articlesQuery && !articlesDateFilter && !articlesOrderBy && !selectedEntities.length && !articlesMinLinkedEntities) {
+    if (!articlesQuery && !articlesDateFilter && !articlesOrderBy && !selectedEntities.length && (articlesMinLinkedEntities || 0) <= 1 && !selectedTopics.length) {
       return []
     }
     let o = filterArray(articles, ["title", "id"], articlesQuery, articlesDateFilter)
@@ -129,7 +130,7 @@ function useDataRoot() {
 
   // events
   const filteredEvents = useMemo(() => {
-    if (!eventsQuery && !eventsDateFilter && !eventsOrderBy && !filteredArticles.length && !eventsMinLinkedArticles && !selectedTopics.length) {
+    if (!eventsQuery && !eventsDateFilter && !eventsOrderBy && !filteredArticles.length && (eventsMinLinkedArticles || 0) <= 1 && !selectedTopics.length) {
       return []
     }
     let o = filterArray(events, ["name", "id"], eventsQuery, eventsDateFilter)
@@ -208,6 +209,7 @@ function useDataRoot() {
     filteredEntities,
     loadData,
     setTopics,
+    setArticles,
     // articles
     articlesQuery,
     setArticlesQuery,

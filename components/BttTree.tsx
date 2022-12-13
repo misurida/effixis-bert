@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
 import {
   Tree,
@@ -8,9 +8,9 @@ import {
   useDragOver,
   TreeMethods
 } from "@minoru/react-dnd-treeview";
-import { Badge, Box, Button, Checkbox, ColorSwatch, createStyles, Group, Text, Tooltip } from "@mantine/core";
+import { ActionIcon, Badge, Box, Button, Checkbox, ColorSwatch, createStyles, Group, Menu, Text, Tooltip } from "@mantine/core";
 import { Topic } from "../utils/types";
-import { IconChevronRight } from "@tabler/icons";
+import { IconChevronRight, IconDotsVertical } from "@tabler/icons";
 import { getContrastColor } from "./annotations/AnnotationsEditor";
 
 
@@ -75,9 +75,6 @@ const useStyles = createStyles((theme) => ({
   }
 }));
 
-type Props = {
-
-};
 
 export function CustomNode(props: {
   node: TreeItem;
@@ -86,10 +83,11 @@ export function CustomNode(props: {
   isSelected: boolean;
   onToggle: (id: NodeModel["id"]) => void;
   onSelect: (node: NodeModel) => void;
+  onDelete?: (node: NodeModel) => void
 }) {
 
   const { classes, cx } = useStyles()
-  const { id, droppable } = props.node;
+  const { id } = props.node;
   const indent = props.depth * 24;
 
   const handleToggle = (e: React.MouseEvent) => {
@@ -99,6 +97,13 @@ export function CustomNode(props: {
 
   const dragOverProps = useDragOver(id, props.isOpen, props.onToggle);
   const handleSelect = () => props.onSelect(props.node);
+
+  const deleteTopic = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if(props.onDelete) {
+      props.onDelete(props.node)
+    }
+  }
 
   return (
     <div
@@ -122,7 +127,7 @@ export function CustomNode(props: {
         />
       </div>
       <div className={classes.labelGridItem} onClick={handleSelect}>
-        <Group spacing="xs" align="center">
+        <Group spacing="xs" align="center" noWrap>
           <ColorSwatch color={props.node.color || "transparent"}>
             <Text weight="bold" size="xs" sx={{ color: props.node.color ? getContrastColor(props.node.color) : "transparent" }} title={props.node.id.toString()}>{props.node.number}</Text>
           </ColorSwatch>
@@ -130,6 +135,20 @@ export function CustomNode(props: {
           <Tooltip withArrow label="Linked articles">
             <Badge ml="xs" size="sm" variant="outline">{props.node.numberOfArticles}</Badge>
           </Tooltip>
+          <Menu width={200} shadow="md">
+            <Menu.Target>
+              <ActionIcon onClick={e => e.stopPropagation()}>
+                <IconDotsVertical size={16} />
+              </ActionIcon>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <Menu.Item onClick={deleteTopic}>
+                Delete topic
+              </Menu.Item>
+
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </div>
     </div>
@@ -145,6 +164,7 @@ export default function BttTree(props: {
   onChange: (value: Topic[]) => void
   onSelect?: (value: NodeModel) => void
   selection: string[]
+  onDelete?: (node: NodeModel) => void
 }) {
 
   const buildTreeItems = (data: Topic[]) => {
@@ -221,6 +241,7 @@ export default function BttTree(props: {
                 isSelected={!!selectedNodes.find((n) => n.id === node.id)}
                 onToggle={onToggle}
                 onSelect={handleSelect}
+                onDelete={props.onDelete}
               />
             )}
             onDrop={handleDrop}

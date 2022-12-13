@@ -16,9 +16,11 @@ const useStyles = createStyles((theme) => ({
   treePreview: {
     flex: 1,
     display: "flex",
+    flexWrap: "wrap",
     gap: "1em",
     "& > *": {
-      flex: 1
+      flex: 2,
+      minWidth: 300
     }
   },
 }));
@@ -39,7 +41,9 @@ const Topics: NextPage = () => {
     setTopicsMaxDisplayedArticles,
     topicsMaxLinkedArticles,
     selectedTopics,
-    setSelectedTopics
+    setSelectedTopics,
+    articles,
+    setArticles
   } = useData()
   const { classes } = useStyles()
   const [showArticles, setShowArticles] = useState(false);
@@ -48,7 +52,6 @@ const Topics: NextPage = () => {
   const [localTopicsMaxDisplayedArticles, setlocalTopicsMaxDisplayedArticles] = useState(topicsMaxDisplayedArticles)
   const [localTopicsMinLinkedArticles, setLocalTopicsMinLinkedArticles] = useState(topicsMinLinkedArticles)
   const [selectedTopic, setSelectedTopic] = useState<Topic | undefined>()
-  const [treeSelection, setTreeSelection] = useState<Topic[]>([])
 
   const onBadgeClick = (t: Topic) => {
     if (t.linkedArticles) {
@@ -99,10 +102,17 @@ const Topics: NextPage = () => {
   }
 
   const handleTreeSelect = (node: NodeModel) => {
-    if(node.id) {
+    if (node.id) {
       const id = String(node.id)
       selectedTopics.includes(id) ? setSelectedTopics(selectedTopics.filter(e => e != id)) : setSelectedTopics([...selectedTopics, id])
     }
+  }
+
+  const handelTopicDelete = (node: NodeModel) => {
+
+    setTopics(topics.map(e => ({ ...e, linkedArticles: e.linkedArticles?.map(a => ({ ...a, linkedTopics: a.linkedTopics?.map(b => (b !== node.id ? "-1" : b)) })) }))?.filter(e => e.id != node.id) || [])
+    setArticles(articles.map(a => ({ ...a, linkedTopics: a.linkedTopics?.map(b => (b !== node.id ? "-1" : b)) })) || [])
+  
   }
 
   return (
@@ -241,15 +251,16 @@ const Topics: NextPage = () => {
 
           <Tabs.Panel value="tree" pt="xs">
             <div className={classes.treePreview}>
-              <ScrollArea sx={{flex: 1}}>
+              <ScrollArea sx={{ flex: 1, minWidth: 400 }}>
                 <BttTree
                   data={filteredTopics}
                   onChange={handleTreeChange}
                   onSelect={handleTreeSelect}
                   selection={selectedTopics}
+                  onDelete={handelTopicDelete}
                 />
               </ScrollArea>
-              <Paper p="md" withBorder shadow="sm" sx={{flex: 2}}>
+              <Paper p="md" withBorder shadow="sm" sx={{ flex: 2 }}>
                 <ArticlesList />
               </Paper>
             </div>
