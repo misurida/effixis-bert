@@ -1,15 +1,27 @@
 import type { NextPage } from 'next'
 import { orderByNameLinkedArticlesActions } from '../utils/globals'
-import { Grid, Title, Text, Card, Group, Button, Modal, NumberInput, Popover, Stack, ColorSwatch, Tooltip, Paper, Slider, ThemeIcon, Checkbox, Menu, ActionIcon, Tabs } from '@mantine/core'
-import { IconChevronDown, IconDotsVertical, IconFilterOff } from '@tabler/icons'
+import { Grid, Title, Text, Group, Button, Modal, NumberInput, Popover, Stack, ColorSwatch, Tooltip, Paper, Slider, ThemeIcon, Checkbox, Menu, ActionIcon, Tabs, createStyles, ScrollArea } from '@mantine/core'
+import { IconChevronDown, IconDotsVertical } from '@tabler/icons'
 import { useMemo, useState } from 'react'
 import { useData } from '../hooks/useData'
 import { Topic } from '../utils/types'
 import OrderByMenu from '../components/OrderByMenu'
 import SearchInput from '../components/SearchInput'
-import { buildColor, buildTopicName, ColorInput, getContrastColor } from '../components/annotations/AnnotationsEditor'
-import MantineTree, { TreeItem } from '../components/MantineTree'
-import { randomId } from '@mantine/hooks'
+import { buildColor, buildTopicName, ColorInput } from '../components/annotations/AnnotationsEditor'
+import BttTree from '../components/BttTree'
+import { NodeModel } from '@minoru/react-dnd-treeview'
+import ArticlesList from '../components/ArticlesList'
+
+const useStyles = createStyles((theme) => ({
+  treePreview: {
+    flex: 1,
+    display: "flex",
+    gap: "1em",
+    "& > *": {
+      flex: 1
+    }
+  },
+}));
 
 const Topics: NextPage = () => {
 
@@ -29,24 +41,14 @@ const Topics: NextPage = () => {
     selectedTopics,
     setSelectedTopics
   } = useData()
+  const { classes } = useStyles()
   const [showArticles, setShowArticles] = useState(false);
   const [showTopWords, setShowTopWords] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [localTopicsMaxDisplayedArticles, setlocalTopicsMaxDisplayedArticles] = useState(topicsMaxDisplayedArticles)
   const [localTopicsMinLinkedArticles, setLocalTopicsMinLinkedArticles] = useState(topicsMinLinkedArticles)
   const [selectedTopic, setSelectedTopic] = useState<Topic | undefined>()
-
-  const filteredTopicsTreeItems: TreeItem[] = useMemo(() => filteredTopics.map((e, i) => {
-    return {
-      id: e.id ? Number(e.id.replace("title_model_", "")) : i,
-      parent: e.parentId ? String(e.parentId) : 0,
-      text: e.name,
-      color: e.color,
-      number: e.id,
-      droppable: true,
-      numberOfArticles: e.linkedArticles?.length
-    }
-  }), [filteredTopics])
+  const [treeSelection, setTreeSelection] = useState<Topic[]>([])
 
   const onBadgeClick = (t: Topic) => {
     if (t.linkedArticles) {
@@ -92,8 +94,19 @@ const Topics: NextPage = () => {
     }
   }
 
+  const handleTreeChange = (value: Topic[]) => {
+    setTopics(value)
+  }
+
+  const handleTreeSelect = (node: NodeModel) => {
+    if(node.id) {
+      const id = String(node.id)
+      selectedTopics.includes(id) ? setSelectedTopics(selectedTopics.filter(e => e != id)) : setSelectedTopics([...selectedTopics, id])
+    }
+  }
+
   return (
-    <div>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Group mb="md">
         <Title order={2} mr="xl">Topics</Title>
         <Group spacing={5}>
@@ -168,15 +181,14 @@ const Topics: NextPage = () => {
           </Group>
         </Group>
       </Group>
+      {filteredTopics.length > 0 ? (
+        <Tabs defaultValue="cards">
+          <Tabs.List>
+            <Tabs.Tab value="cards" >Cards</Tabs.Tab>
+            <Tabs.Tab value="tree">Tree</Tabs.Tab>
+          </Tabs.List>
 
-      <Tabs defaultValue="cards">
-        <Tabs.List>
-          <Tabs.Tab value="cards" >Cards</Tabs.Tab>
-          <Tabs.Tab value="tree">Tree</Tabs.Tab>
-        </Tabs.List>
-
-        <Tabs.Panel value="cards" pt="xs">
-          {filteredTopics.length > 0 ? (
+          <Tabs.Panel value="cards" pt="xs">
             <Grid>
               {filteredTopics.map(t => (
                 <Grid.Col md={6} lg={4} key={t.id}>
@@ -225,16 +237,28 @@ const Topics: NextPage = () => {
                 </Grid.Col>
               ))}
             </Grid>
-          ) : (
-            <Text sx={{ opacity: 0.5 }}>No topic found...</Text>
-          )}
-        </Tabs.Panel>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="tree" pt="xs">
-          <MantineTree data={filteredTopicsTreeItems} onChange={() => {}} onSelect={() => {}} />
-        </Tabs.Panel>
+          <Tabs.Panel value="tree" pt="xs">
+            <div className={classes.treePreview}>
+              <ScrollArea sx={{flex: 1}}>
+                <BttTree
+                  data={filteredTopics}
+                  onChange={handleTreeChange}
+                  onSelect={handleTreeSelect}
+                  selection={selectedTopics}
+                />
+              </ScrollArea>
+              <Paper p="md" withBorder shadow="sm" sx={{flex: 2}}>
+                <ArticlesList />
+              </Paper>
+            </div>
+          </Tabs.Panel>
 
-      </Tabs>
+        </Tabs>
+      ) : (
+        <Text sx={{ opacity: 0.5 }}>No topic found...</Text>
+      )}
       <Modal
         opened={showArticles}
         onClose={() => setShowArticles(false)}

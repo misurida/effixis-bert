@@ -96,6 +96,9 @@ function useDataRoot() {
       return []
     }
     let o = filterArray(articles, ["title", "id"], articlesQuery, articlesDateFilter)
+    if(selectedTopics.length) {
+      o = o.filter(e => e.linkedTopics?.some(f => selectedTopics.includes(f)))
+    }
     if (selectedEntities.length > 0) {
       const l = entities.filter(e => selectedEntities.includes(e.id)).reduce((a, e) => [...a, ...(e.linkedArticles || [])], [] as string[])
       o = o.filter(a => l.includes(a.id))
@@ -107,7 +110,7 @@ function useDataRoot() {
       sortArray(o, articlesOrderBy)
     }
     return o;
-  }, [articles, selectedEntities, articlesQuery, articlesDateFilter, articlesOrderBy, articlesMinLinkedEntities])
+  }, [articles, selectedEntities, articlesQuery, articlesDateFilter, articlesOrderBy, articlesMinLinkedEntities, selectedTopics])
 
   const articlesMaxLinkedEntities = useMemo(() =>
     (filteredArticles.length > 0 ? filteredArticles : articles).reduce((a, e) => (e.linkedEntities?.length || 0) > a ? e.linkedEntities?.length || 0 : a, 0),
@@ -155,6 +158,9 @@ function useDataRoot() {
   // topics
   const filteredTopics = useMemo(() => {
     let o = filterArray(topics, ["name", "id"], topicsQuery)
+    if(selectedTopics.length) {
+      return o
+    }
     if (filteredArticles.length > 0) {
       const arIds = filteredArticles.map(a => a.id)
       o = o.map(e => ({ ...e, linkedArticles: e.linkedArticles?.filter(a => arIds.includes(a.id)) || [] }))
@@ -166,7 +172,7 @@ function useDataRoot() {
       sortArray(o, topicsOrderBy)
     }
     return o;
-  }, [topics, topicsQuery, topicsOrderBy, topicsMinLinkedArticles, filteredArticles])
+  }, [topics, topicsQuery, topicsOrderBy, topicsMinLinkedArticles, filteredArticles, selectedTopics])
 
   const topicsMaxLinkedArticles = useMemo(() =>
     (filteredTopics.length > 0 ? filteredTopics : topics).reduce((a, e) => (e.linkedArticles?.length || 0) > a ? e.linkedArticles?.length || 0 : a, 0),

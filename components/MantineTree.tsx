@@ -182,7 +182,7 @@ export default function MantineTree(props: {
 }) {
 
   const { classes } = useStyles()
-  const [treeData, setTreeData] = useState<TreeItem[]>([]);
+  const [treeData, setTreeData] = useState<TreeItem[]>(props.data);
   const [selectedNode, setSelectedNode] = useState<TreeItem | null>(null);
 
   const ref = useRef(null);
@@ -193,10 +193,6 @@ export default function MantineTree(props: {
   const handleCloseAll = () => {
     if (ref.current) (ref.current as any).closeAll()
   }
-
-  useEffect(() => {
-    setTreeData(props.data)
-  }, [props.data])
 
   useEffect(() => {
     if (props.selectedItem !== undefined) {
